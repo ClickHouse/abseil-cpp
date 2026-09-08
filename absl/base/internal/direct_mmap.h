@@ -38,6 +38,9 @@
 #include <cerrno>
 #include <cstdarg>
 #include <cstdint>
+#if defined(__FILC__)
+#include <pizlonated_syscalls.h>
+#endif
 
 #ifdef __mips__
 // Include definitions of the ABI currently in use.
@@ -73,7 +76,9 @@ namespace base_internal {
 // https://chromium.googlesource.com/linux-syscall-support/+/master/linux_syscall_support.h
 inline void* DirectMmap(void* start, size_t length, int prot, int flags, int fd,
                         off_t offset) noexcept {
-#if defined(__i386__) || defined(__ARM_ARCH_3__) || defined(__ARM_EABI__) || \
+#if defined(__FILC__)
+  return zsys_mmap(start, length, prot, flags, fd, offset);
+#elif defined(__i386__) || defined(__ARM_ARCH_3__) || defined(__ARM_EABI__) || \
     defined(__m68k__) || defined(__sh__) ||                                  \
     (defined(__hppa__) && !defined(__LP64__)) ||                             \
     (defined(__mips__) && _MIPS_SIM == _MIPS_SIM_ABI32) ||                   \
@@ -120,12 +125,16 @@ inline void* DirectMmap(void* start, size_t length, int prot, int flags, int fd,
 // 32 bits, and gcc will dump ugly warnings about casting from a pointer
 // to an integer of a different size. We also need to make sure __off64_t
 // isn't truncated to 32-bits under x32.
+#if defined(__FILC__)
+  return zsys_mmap(start, length, prot, flags, fd, offset);
+#else
 #define MMAP_SYSCALL_ARG(x) ((uint64_t)(uintptr_t)(x))
   return reinterpret_cast<void*>(
       syscall(SYS_mmap, MMAP_SYSCALL_ARG(start), MMAP_SYSCALL_ARG(length),
               MMAP_SYSCALL_ARG(prot), MMAP_SYSCALL_ARG(flags),
               MMAP_SYSCALL_ARG(fd), static_cast<uint64_t>(offset)));
 #undef MMAP_SYSCALL_ARG
+#endif
 #else  // Remaining 64-bit aritectures.
   static_assert(sizeof(unsigned long) == 8, "Platform is not 64-bit");
   return reinterpret_cast<void*>(

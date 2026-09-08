@@ -112,7 +112,7 @@ absl::Status absl::Status::MakeNonOkStatusWithOkCode(
           absl::StatusCode::kOk, message, nullptr)));
 }
 
-uintptr_t Status::MakeRep(uintptr_t inlined_rep, absl::string_view msg,
+void* Status::MakeRep(void* inlined_rep, absl::string_view msg,
                           absl::SourceLocation loc) {
   bool ok = inlined_rep == CodeToInlinedRep(absl::StatusCode::kOk);
   if (ok) return inlined_rep;
@@ -128,7 +128,7 @@ uintptr_t Status::MakeRep(uintptr_t inlined_rep, absl::string_view msg,
   return PointerToRep(rep);
 }
 
-uintptr_t Status::AddSourceLocationImpl(uintptr_t rep,
+void* Status::AddSourceLocationImpl(void* rep,
                                         absl::SourceLocation loc) {
   if (IsInlined(rep)) return rep;
   if (loc.file_name()[0] == '\0') return rep;
@@ -138,7 +138,7 @@ uintptr_t Status::AddSourceLocationImpl(uintptr_t rep,
 }
 
 status_internal::StatusRep* absl_nonnull Status::PrepareToModify(
-    uintptr_t rep) {
+    void* rep) {
   if (IsInlined(rep)) {
     return new status_internal::StatusRep(InlinedRepToCode(rep),
                                           absl::string_view(), nullptr);
@@ -146,7 +146,7 @@ status_internal::StatusRep* absl_nonnull Status::PrepareToModify(
   return RepToPointer(rep)->CloneAndUnref();
 }
 
-std::string Status::ToStringSlow(uintptr_t rep, StatusToStringMode mode) {
+std::string Status::ToStringSlow(void* rep, StatusToStringMode mode) {
   if (IsInlined(rep)) {
     return absl::StrCat(absl::StatusCodeToString(InlinedRepToCode(rep)), ": ");
   }

@@ -61,7 +61,7 @@
 // Apple macOS has sigaltstack, but using it makes backtrace() unusable.
 #if !(defined(TARGET_OS_OSX) && TARGET_OS_OSX) &&     \
     !(defined(TARGET_OS_WATCH) && TARGET_OS_WATCH) && \
-    !(defined(TARGET_OS_TV) && TARGET_OS_TV) && !defined(__QNX__)
+    !(defined(TARGET_OS_TV) && TARGET_OS_TV) && !defined(__QNX__) && !defined(__FILC__)
 #define ABSL_HAVE_SIGALTSTACK
 #endif
 #endif
@@ -110,12 +110,14 @@ struct FailureSignalData {
 };
 
 ABSL_CONST_INIT static FailureSignalData failure_signal_data[] = {
+#if !defined(__FILC__)
     {SIGSEGV, "SIGSEGV", FSD_PREVIOUS_INIT},
     {SIGILL, "SIGILL", FSD_PREVIOUS_INIT},
     {SIGFPE, "SIGFPE", FSD_PREVIOUS_INIT},
+#endif
     {SIGABRT, "SIGABRT", FSD_PREVIOUS_INIT},
     {SIGTERM, "SIGTERM", FSD_PREVIOUS_INIT},
-#ifndef _WIN32
+#if !defined(__FILC__) && !defined(_WIN32)
     {SIGBUS, "SIGBUS", FSD_PREVIOUS_INIT},
     {SIGTRAP, "SIGTRAP", FSD_PREVIOUS_INIT},
 #endif

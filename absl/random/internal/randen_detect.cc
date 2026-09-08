@@ -35,6 +35,10 @@
 
 #include "absl/random/internal/platform.h"
 
+#if defined(__x86_64__) || defined(__i386__)
+#include <cpuid.h>
+#endif
+
 #if !defined(__UCLIBC__) && defined(__GLIBC__) && \
     (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 16))
 #define ABSL_HAVE_GETAUXVAL
@@ -62,11 +66,12 @@
 extern void __cpuid(int[4], int);
 #else
 // MSVC-equivalent __cpuid intrinsic function.
-static void __cpuid(int cpu_info[4], int info_type) {
-  __asm__ volatile("cpuid \n\t"
-                   : "=a"(cpu_info[0]), "=b"(cpu_info[1]), "=c"(cpu_info[2]),
-                     "=d"(cpu_info[3])
-                   : "a"(info_type), "c"(0));
+static void my_cpuid(int cpu_info[4], int info_type) {
+  __get_cpuid(info_type,
+              reinterpret_cast<unsigned int*>(cpu_info + 0),
+              reinterpret_cast<unsigned int*>(cpu_info + 1),
+              reinterpret_cast<unsigned int*>(cpu_info + 2),
+              reinterpret_cast<unsigned int*>(cpu_info + 3));
 }
 #endif
 #endif  // ABSL_INTERNAL_USE_X86_CPUID
@@ -162,7 +167,7 @@ bool CPUSupportsRandenHwAes() {
 #if defined(ABSL_INTERNAL_USE_X86_CPUID)
   // 1. For x86: Use CPUID to detect the required AES instruction set.
   int regs[4];
-  __cpuid(reinterpret_cast<int*>(regs), 1);
+  my_cpuid(reinterpret_cast<int*>(regs), 1);
   return regs[2] & (1 << 25);  // AES
 
 #elif defined(ABSL_INTERNAL_USE_GETAUXVAL)

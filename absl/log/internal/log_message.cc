@@ -61,6 +61,10 @@
 #include "absl/time/time.h"
 #include "absl/types/span.h"
 
+#if defined(__FILC__)
+#include <pizlonated_syscalls.h>
+#endif
+
 extern "C" ABSL_ATTRIBUTE_WEAK void ABSL_INTERNAL_C_SYMBOL(
     AbslInternalOnFatalLogMessage)(const absl::LogEntry&) {
   // Default - Do nothing
@@ -386,7 +390,11 @@ void LogMessage::FailWithoutStackTrace() {
   }
 #endif
 
+#if defined(__FILC__)
+  zsys_abort();
+#else
   abort();
+#endif
 }
 
 void LogMessage::FailQuietly() {

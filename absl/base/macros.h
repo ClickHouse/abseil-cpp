@@ -219,7 +219,7 @@ ABSL_NAMESPACE_END
 // Note: go/cpp-inliner is Google-internal service for automated refactoring.
 // While open-source users do not have access to this service, the macro is
 // provided for compatibility.
-#if ABSL_HAVE_CPP_ATTRIBUTE(clang::annotate)
+#if ABSL_HAVE_CPP_ATTRIBUTE(clang::annotate) && !defined(__FILC__)
 #define ABSL_REFACTOR_INLINE [[clang::annotate("inline-me")]]
 #else
 #define ABSL_REFACTOR_INLINE
